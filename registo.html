@@ -2,11 +2,13 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CompraJá - Autenticação Google Real</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CompraJá - Autenticação Google</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
     <script>
         const SUPABASE_URL = "https://yngxpudkzjkicyokcdwq.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3hwdWRrempraWN5b2tjZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjU1NTQsImV4cCI6MjA5NDY0MTU1NH0.2UlNBw8F8HMgWeuyg9IygVFLAfYtW4Pf8j1jGH864gE";
@@ -17,115 +19,136 @@
         :root { 
             --primary-orange: #FF6600; 
             --bg-gray: #F8F9FA; 
-            --border-color: #EAEAEA; 
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
-        body { background: #E5E5E5; display: flex; justify-content: center; padding: 20px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         
-        .smartphone-screen { 
-            width: 375px; background: white; border-radius: 16px; overflow: hidden; height: 812px; 
-            position: relative; display: flex; flex-direction: column; padding: 30px; justify-content: center; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        /* Layout Responsivo: Ocupa o ecrã inteiro no telemóvel */
+        body { 
+            background: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            padding: 20px;
         }
         
-        .brand { text-align: center; margin-bottom: 50px; }
-        .brand h1 { color: var(--primary-orange); font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
-        .brand p { font-size: 13px; color: #666; margin-top: 8px; line-height: 1.4; }
-        
-        /* Botão Oficial Estilo Google com Imagem */
-        .google-btn {
+        /* No telemóvel isto expande para 100%, no PC fica contido */
+        .app-container { 
             width: 100%;
-            background: white;
-            color: #333333;
-            border: 1px solid #CCCCCC;
-            border-radius: 12px;
-            height: 52px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
+            max-width: 400px;
+            height: 100%;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between;
             align-items: center;
+            padding: 40px 20px;
+        }
+        
+        .brand { text-align: center; margin-top: auto; margin-bottom: 40px; }
+        .brand h1 { color: var(--primary-orange); font-size: 36px; font-weight: 800; letter-spacing: -1px; }
+        .brand p { font-size: 14px; color: #666; margin-top: 10px; line-height: 1.5; padding: 0 10px; }
+        
+        /* Zona onde a API do Google vai renderizar o botão nativo */
+        .google-auth-container {
+            width: 100%;
+            display: flex;
             justify-content: center;
-            gap: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: background 0.2s, transform 0.1s;
-        }
-        .google-btn:hover {
-            background: var(--bg-gray);
-        }
-        .google-btn:active {
-            transform: scale(0.98);
+            margin-bottom: auto;
+            min-height: 50px;
         }
         
         .footer-notice {
-            position: absolute;
-            bottom: 30px;
-            left: 0;
-            width: 100%;
             text-align: center;
             font-size: 11px;
             color: #999999;
-            padding: 0 20px;
-            line-height: 1.4;
+            line-height: 1.5;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-    <div class="smartphone-screen">
+    <div class="app-container">
         <div class="brand">
             <h1>CompraJá</h1>
             <p>Entra instantaneamente para comprar ou gerir os teus artigos comerciais no ecossistema.</p>
         </div>
 
-        <button class="google-btn" onclick="autenticarComGoogleReal()">
-            <img src="https://ssl.gstatic.com/images/branding/product/1x/gsa_android_loupe_64dp.png" alt="Google Logo" width="20" height="20">
-            Continuar com o Google
-        </button>
+        <div class="google-auth-container">
+            <div id="buttonDiv"></div>
+        </div>
 
         <div class="footer-notice">
-            Ao continuing, garantes o acesso seguro encriptado de ponta a ponta gerido pelas políticas oficiais da Google e Supabase Auth.
+            Acesso seguro gerido pelas políticas oficiais da Google e Supabase Auth.
         </div>
     </div>
 
     <script>
-        // Detetar automaticamente se o utilizador já regressou do login do Google
+        // 1. Verificar se já existe sessão ativa ao carregar a página
         async function verificarSessaoAtiva() {
-            const { data: { session }, error } = await _supabase.auth.getSession();
-            
+            const { data: { session } } = await _supabase.auth.getSession();
             if (session && session.user) {
-                const emailUsuario = session.user.email;
-                
-                // Se o e-mail do Google contiver a palavra "fornecedor" ou "loja"
-                if (emailUsuario.includes("fornecedor") || emailUsuario.includes("loja")) {
-                    window.location.href = "painel-fornecedor.html";
-                } else {
-                    // Cliente padrão
-                    window.location.href = "index.html";
-                }
+                redirecionarUsuario(session.user.email);
             }
         }
 
-        // Função disparada ao clicar no botão
-        async function autenticarComGoogleReal() {
+        // 2. Encaminhar conforme o e-mail
+        function redirecionarUsuario(emailUsuario) {
+            if (emailUsuario.includes("fornecedor") || emailUsuario.includes("loja")) {
+                window.location.href = "painel-fornecedor.html";
+            } else {
+                window.location.href = "index.html";
+            }
+        }
+
+        // 3. Capturar o Token nativo da Google e enviar para o Supabase
+        async function handleCredentialResponse(response) {
             try {
-                const { data, error } = await _supabase.auth.signInWithOAuth({
+                const { data, error } = await _supabase.auth.signInWithIdToken({
                     provider: 'google',
-                    options: {
-                        redirectTo: window.location.href 
-                    }
+                    token: response.credential
                 });
 
                 if (error) throw error;
 
+                if (data.user) {
+                    redirecionarUsuario(data.user.email);
+                }
             } catch (err) {
-                console.error(err);
-                alert("Não foi possível conectar ao serviço da Google. Por favor, tenta novamente.");
+                console.error("Erro na validação do token:", err);
+                alert("Falha na autenticação nativa. Tenta novamente.");
             }
         }
 
-        // Corre a verificação inicial
-        verificarSessaoAtiva();
+        // 4. Inicializar a API oficial da Google assim que a página estiver pronta
+        window.onload = function () {
+            verificarSessaoAtiva();
+
+            // Configura o cliente de ID da Google (Usa o Client ID que pegaste na Google Cloud Console)
+            // Substitui o texto abaixo pelo teu ID real da Google se o botão não renderizar.
+            google.accounts.id.initialize({
+                client_id: "781702584102-mockid.apps.googleusercontent.com", 
+                callback: handleCredentialResponse
+            });
+
+            // Renderiza o botão nativo oficial da Google com o design padrão de mercado
+            google.accounts.id.renderButton(
+                document.getElementById("buttonDiv"),
+                { 
+                    theme: "outline", 
+                    size: "large", 
+                    type: "standard",
+                    text: "continue_with",
+                    shape: "rectangular",
+                    logo_alignment: "left",
+                    width: "320" // Largura ideal para telemóveis
+                }
+            );
+            
+            // Opcional: Mostra o prompt nativo flutuante "One Tap" no topo do ecrã
+            google.accounts.id.prompt(); 
+        };
     </script>
 </body>
 </html>
