@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompraJá - Autenticação Segura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://yngxpudkzjkicyokcdwq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3hwdWRrempraWN5b2tjZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjU1NTQsImV4cCI6MjA5NDY0MTU1NH0.2UlNBw8F8HMgWeuyg9IygVFLAfYtW4Pf8j1jGH864gE";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
+    <style>
+        :root { --primary-orange: #FF6600; --bg-gray: #F8F9FA; --border-color: #EAEAEA; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: #E5E5E5; display: flex; justify-content: center; padding: 20px; }
+        .smartphone-screen { width: 375px; background: white; border-radius: 16px; overflow: hidden; height: 812px; position: relative; display: flex; flex-direction: column; padding: 20px; justify-content: center; }
+        .brand { text-align: center; margin-bottom: 30px; }
+        .brand h1 { color: var(--primary-orange); font-size: 28px; font-weight: 800; }
+        .brand p { font-size: 12px; color: #666; margin-top: 5px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-gray); outline: none; font-size: 13px; }
+        .form-group input:focus { border-color: var(--primary-orange); background: white; }
+        .auth-btn { width: 100%; background: var(--primary-orange); color: white; border: none; border-radius: 8px; height: 46px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .toggle-link { text-align: center; margin-top: 20px; font-size: 12px; color: #555; }
+        .toggle-link span { color: var(--primary-orange); font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="smartphone-screen">
+        <div class="brand">
+            <h1>CompraJá</h1>
+            <p id="auth-subtitle">Faz login para acederes à tua conta de cliente ou parceiro</p>
+        </div>
+
+        <form id="auth-form" onsubmit="processarAutenticacao(event)">
+            <div class="form-group">
+                <label>E-mail Corporativo ou Pessoal</label>
+                <input type="email" id="auth-email" placeholder="Ex: nome@gmail.com" required>
+            </div>
+            <div class="form-group">
+                <label>Palavra-passe</label>
+                <input type="password" id="auth-password" placeholder="Mínimo 6 caracteres" required>
+            </div>
+            <button type="submit" id="auth-submit-btn" class="auth-btn">Entrar na Conta</button>
+        </form>
+
+        <div class="toggle-link" id="toggle-area">
+            Não tens conta? <span onclick="mudarModo(true)">Registar Agora</span>
+        </div>
+    </div>
+
+    <script>
+        let modoRegisto = false;
+
+        function mudarModo(queroRegistar) {
+            modoRegisto = quieroRegistar;
+            const btn = document.getElementById('auth-submit-btn');
+            const subtitle = document.getElementById('auth-subtitle');
+            const toggleArea = document.getElementById('toggle-area');
+
+            if (modoRegisto) {
+                subtitle.innerText = "Cria a tua conta encriptada e segura nos nossos servidores";
+                btn.innerText = "Criar Nova Conta";
+                toggleArea.innerHTML = `Já tens uma conta? <span onclick="mudarModo(false)">Fazer Login</span>`;
+            } else {
+                subtitle.innerText = "Faz login para acederes à tua conta de cliente ou parceiro";
+                btn.innerText = "Entrar na Conta";
+                toggleArea.innerHTML = `Não tens conta? <span onclick="mudarModo(true)">Registar Agora</span>`;
+            }
+        }
+
+        async function processarAutenticacao(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const btn = document.getElementById('auth-submit-btn');
+
+            btn.disabled = true;
+            btn.innerText = "A validar credenciais reais...";
+
+            if (modoRegisto) {
+                // REGISTO REAL NO SUPABASE AUTH
+                const { data, error } = await _supabase.auth.signUp({ email, password });
+                if (error) {
+                    alert(`Erro no registo: ${error.message}`);
+                } else {
+                    alert("Conta real criada! Se o Supabase exigir validação, verifica o teu e-mail, caso contrário já podes fazer login.");
+                    mudarModo(false);
+                }
+            } else {
+                // LOGIN REAL NO SUPABASE AUTH
+                const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    alert(`Falha no Login: ${error.message}`);
+                } else {
+                    alert("Autenticado com sucesso via servidor!");
+                    
+                    // Se for o e-mail do fornecedor, redireciona para o painel dele
+                    if(email.includes("fornecedor")) {
+                        window.location.href = "painel-fornecedor.html";
+                    } else {
+                        window.location.href = "index.html";
+                    }
+                }
+            }
+            btn.disabled = false;
+            mudarModo(modoRegisto);
+        }
+    </script>
+</body>
+</html>

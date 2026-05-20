@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompraJá - Autenticação Google Real</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://yngxpudkzjkicyokcdwq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3hwdWRrempraWN5b2tjZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjU1NTQsImV4cCI6MjA5NDY0MTU1NH0.2UlNBw8F8HMgWeuyg9IygVFLAfYtW4Pf8j1jGH864gE";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
+    <style>
+        :root { 
+            --primary-orange: #FF6600; 
+            --bg-gray: #F8F9FA; 
+            --border-color: #EAEAEA; 
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: #E5E5E5; display: flex; justify-content: center; padding: 20px; }
+        
+        .smartphone-screen { 
+            width: 375px; background: white; border-radius: 16px; overflow: hidden; height: 812px; 
+            position: relative; display: flex; flex-direction: column; padding: 30px; justify-content: center; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .brand { text-align: center; margin-bottom: 50px; }
+        .brand h1 { color: var(--primary-orange); font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
+        .brand p { font-size: 13px; color: #666; margin-top: 8px; line-height: 1.4; }
+        
+        /* Botão Oficial Estilo Google com Imagem */
+        .google-btn {
+            width: 100%;
+            background: white;
+            color: #333333;
+            border: 1px solid #CCCCCC;
+            border-radius: 12px;
+            height: 52px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .google-btn:hover {
+            background: var(--bg-gray);
+        }
+        .google-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .footer-notice {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 11px;
+            color: #999999;
+            padding: 0 20px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="smartphone-screen">
+        <div class="brand">
+            <h1>CompraJá</h1>
+            <p>Entra instantaneamente para comprar ou gerir os teus artigos comerciais no ecossistema.</p>
+        </div>
+
+        <button class="google-btn" onclick="autenticarComGoogleReal()">
+            <img src="https://ssl.gstatic.com/images/branding/product/1x/gsa_android_loupe_64dp.png" alt="Google Logo" width="20" height="20">
+            Continuar com o Google
+        </button>
+
+        <div class="footer-notice">
+            Ao continuing, garantes o acesso seguro encriptado de ponta a ponta gerido pelas políticas oficiais da Google e Supabase Auth.
+        </div>
+    </div>
+
+    <script>
+        // Detetar automaticamente se o utilizador já regressou do login do Google
+        async function verificarSessaoAtiva() {
+            const { data: { session }, error } = await _supabase.auth.getSession();
+            
+            if (session && session.user) {
+                const emailUsuario = session.user.email;
+                
+                // Se o e-mail do Google contiver a palavra "fornecedor" ou "loja"
+                if (emailUsuario.includes("fornecedor") || emailUsuario.includes("loja")) {
+                    window.location.href = "painel-fornecedor.html";
+                } else {
+                    // Cliente padrão
+                    window.location.href = "index.html";
+                }
+            }
+        }
+
+        // Função disparada ao clicar no botão
+        async function autenticarComGoogleReal() {
+            try {
+                const { data, error } = await _supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.href 
+                    }
+                });
+
+                if (error) throw error;
+
+            } catch (err) {
+                console.error(err);
+                alert("Não foi possível conectar ao serviço da Google. Por favor, tenta novamente.");
+            }
+        }
+
+        // Corre a verificação inicial
+        verificarSessaoAtiva();
+    </script>
+</body>
+</html>

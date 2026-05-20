@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompraJá</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://yngxpudkzjkicyokcdwq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3hwdWRrempraWN5b2tjZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjU1NTQsImV4cCI6MjA5NDY0MTU1NH0.2UlNBw8F8HMgWeuyg9IygVFLAfYtW4Pf8j1jGH864gE";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
+    <style>
+        :root {
+            --primary-orange: #FF6600;
+            --primary-orange-light: #FFF3EB;
+            --bg-gray: #F8F9FA;
+            --text-dark: #333333;
+            --text-muted: #888888;
+            --border-color: #EAEAEA;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: #E5E5E5; display: flex; justify-content: center; padding: 20px; }
+        
+        .smartphone-screen {
+            width: 375px; background: white; border-radius: 16px; overflow-y: auto; height: 812px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column;
+        }
+        .smartphone-screen::-webkit-scrollbar { display: none; }
+
+        header { padding: 15px; background: white; border-bottom: 1px solid #EAEAEA; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .logo { font-weight: 800; font-size: 22px; }
+        .logo span { color: var(--primary-orange); }
+        
+        .search-container { background: var(--bg-gray); border-radius: 8px; padding: 10px; display: flex; align-items: center; }
+        .search-container input { border: none; background: transparent; outline: none; margin-left: 10px; width: 100%; font-size: 13px; }
+
+        /* BANNER 1 (FOTO REAL DA FAMÍLIA EM EMBEDDED DATA) */
+        .hero-banner { 
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.95) 45%, rgba(255,255,255,0.1) 100%), url('https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80');
+            background-size: cover; background-position: right;
+            margin: 15px; border-radius: 12px; padding: 20px; min-height: 160px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .hero-banner h2 { font-size: 18px; font-weight: 800; color: #333; line-height: 1.2; }
+        .hero-banner h2 span { color: var(--primary-orange); }
+        .hero-banner p { font-size: 11px; color: #666; margin: 6px 0 12px 0; font-weight: 500; }
+        .btn-buy { background: var(--primary-orange); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: bold; width: fit-content; cursor: pointer; }
+
+        /* CATEGORIAS EM CÍRCULOS */
+        .categories-scroll { display: flex; gap: 15px; padding: 10px 15px; overflow-x: auto; }
+        .categories-scroll::-webkit-scrollbar { display: none; }
+        .cat-item { flex: 0 0 auto; width: 65px; text-align: center; cursor: pointer; text-decoration: none; }
+        .cat-icon-box { width: 55px; height: 55px; background: var(--primary-orange-light); border-radius: 50%; color: var(--primary-orange); display: flex; align-items: center; justify-content: center; font-size: 18px; margin: 0 auto 6px auto; border: 1px solid #FFE0CC; }
+        .cat-name { font-size: 10px; color: var(--text-dark); font-weight: 500; }
+
+        /* BANNER 2 (FOTO REAL DO ESTAFETA DE MOTA) */
+        .speed-banner {
+            background-image: linear-gradient(90deg, rgba(250,245,240,0.95) 55%, rgba(250,245,240,0.2) 100%), url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=500&q=80');
+            background-size: cover; background-position: right;
+            margin: 15px; border-radius: 12px; padding: 20px; min-height: 130px;
+            border: 1px solid #FFE0CC; display: flex; flex-direction: column; justify-content: center;
+        }
+        .speed-banner h3 { font-size: 16px; font-weight: 800; color: #333; line-height: 1.2; }
+        .speed-banner h3 span { color: var(--primary-orange); }
+        .speed-banner p { font-size: 11px; color: #666; margin-top: 4px; }
+
+        .section-title { padding: 10px 15px; font-size: 13px; font-weight: bold; color: black; display: flex; justify-content: space-between; }
+        
+        /* MONTRA DE PRODUTOS */
+        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 15px 100px 15px; }
+        .product-card { background: white; border-radius: 12px; padding: 10px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+        .product-img { width: 100%; height: 110px; background: var(--bg-gray); border-radius: 8px; object-fit: cover; margin-bottom: 8px; }
+        .product-name { font-size: 12px; color: var(--text-dark); font-weight: 500; height: 32px; overflow: hidden; line-height: 1.3; }
+        .product-category { font-size: 9px; color: var(--primary-orange); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+        .product-price { font-size: 13px; font-weight: bold; color: black; margin-top: 4px; }
+        
+        .add-to-cart-btn { background: white; border: 1px solid var(--primary-orange); color: var(--primary-orange); width: 100%; padding: 6px 0; border-radius: 6px; font-size: 11px; font-weight: bold; margin-top: 8px; cursor: pointer; transition: 0.2s; }
+        .add-to-cart-btn:hover { background: var(--primary-orange); color: white; }
+
+        .cart-count-badge { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 9px; font-weight: bold; }
+
+        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #EAEAEA; display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 0; text-align: center; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; font-size: 10px; color: var(--text-muted); text-decoration: none; position: relative; }
+        .nav-item.active { color: var(--primary-orange); }
+        .nav-item i { font-size: 18px; margin-bottom: 3px; }
+    </style>
+</head>
+<body>
+
+    <div class="smartphone-screen">
+        <header>
+            <div class="header-top">
+                <div class="logo">Compra<span>Já</span></div>
+                <div style="font-size: 11px; font-weight: bold;"><i class="fa-solid fa-location-dot" style="color: var(--primary-orange)"></i> Lubango</div>
+            </div>
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass" style="color: #AAA;"></i>
+                <input type="text" id="search-input" placeholder="Pesquisar produtos reais..." oninput="filtrarProdutos()">
+            </div>
+        </header>
+
+        <div class="hero-banner">
+            <h2>Receba tudo<br><span>sem sair de casa.</span></h2>
+            <p>Entrega rápida, segura e com confiança.</p>
+            <button class="btn-buy" onclick="document.getElementById('montra').scrollIntoView({behavior: 'smooth'})">Comprar agora</button>
+        </div>
+
+        <div class="categories-scroll">
+            <a href="categorias.html?cat=Supermercado" class="cat-item">
+                <div class="cat-icon-box"><i class="fa-solid fa-basket-shopping"></i></div>
+                <div class="cat-name">Mercado</div>
+            </a>
+            <a href="categorias.html?cat=Bebidas" class="cat-item">
+                <div class="cat-icon-box"><i class="fa-solid fa-wine-bottle"></i></div>
+                <div class="cat-name">Bebidas</div>
+            </a>
+            <a href="categorias.html?cat=Higiene" class="cat-item">
+                <div class="cat-icon-box"><i class="fa-solid fa-pump-soap"></i></div>
+                <div class="cat-name">Higiene</div>
+            </a>
+            <a href="categorias.html?cat=Tecnologia" class="cat-item">
+                <div class="cat-icon-box"><i class="fa-solid fa-headphones"></i></div>
+                <div class="cat-name">Tecnologia</div>
+            </a>
+            <a href="categorias.html?cat=Moda" class="cat-item">
+                <div class="cat-icon-box"><i class="fa-solid fa-shirt"></i></div>
+                <div class="cat-name">Roupas</div>
+            </a>
+        </div>
+
+        <div class="speed-banner">
+            <h3>Entrega rápida em menos de<br><span>tempo que importa.</span></h3>
+            <p>Profissionais prontos em Luanda.</p>
+        </div>
+
+        <div class="section-title" id="montra">
+            <span>Catálogo Completo</span>
+            <span style="font-size: 11px; color: var(--text-muted);" id="prod-count">0 produtos</span>
+        </div>
+
+        <div class="products-grid" id="lista-produtos">
+            <p style="text-align:center; grid-column: span 2; padding:20px; font-size:12px; color:#888;"><i class="fa-solid fa-spinner fa-spin"></i> A ler base de dados real...</p>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html" class="nav-item active"><i class="fa-solid fa-house"></i>Início</a>
+            <a href="categorias.html" class="nav-item"><i class="fa-solid fa-bars"></i>Categorias</a>
+            <a href="carrinho.html" class="nav-item">
+                <i class="fa-solid fa-cart-shopping"></i>Carrinho
+                <span class="cart-count-badge" id="badge-nav">0</span>
+            </a>
+            <a href="registo.html" class="nav-item"><i class="fa-regular fa-user"></i>Conta</a>
+        </div>
+    </div>
+
+    <script>
+        let todosProdutos = [];
+
+        async function obterProdutos() {
+            try {
+                const { data, error } = await _supabase.from('produtos').select('*').order('criado_em', { ascending: false });
+                if (error) throw error;
+                todosProdutos = data || [];
+                renderizarProdutos(todosProdutos);
+            } catch (err) {
+                document.getElementById('lista-produtos').innerHTML = `<p style="grid-column:span 2; text-align:center; color:red; font-size:12px;">Erro de ligação ao Supabase.</p>`;
+            }
+        }
+
+        function renderizarProdutos(lista) {
+            const container = document.getElementById('lista-produtos');
+            document.getElementById('prod-count').innerText = `${lista.length} produtos`;
+            if(lista.length === 0) {
+                container.innerHTML = `<p style="grid-column:span 2; text-align:center; color:#888; font-size:12px;">Nenhum produto encontrado.</p>`;
+                return;
+            }
+            container.innerHTML = '';
+            lista.forEach(p => {
+                container.innerHTML += `
+                    <div class="product-card">
+                        <div>
+                            <img class="product-img" src="${p.imagem_url || 'https://via.placeholder.com/150'}" alt="${p.nome}">
+                            <div class="product-category">${p.categoria || 'Geral'}</div>
+                            <div class="product-name">${p.nome}</div>
+                        </div>
+                        <div>
+                            <div class="product-price">${parseFloat(p.preco).toLocaleString()} Kz</div>
+                            <button class="add-to-cart-btn" onclick="adicionarAoCarrinhoReal('${p.nome}', ${p.preco})">Adicionar</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filtrarProdutos() {
+            const termo = document.getElementById('search-input').value.toLowerCase();
+            const filtrados = todosProdutos.filter(p => p.nome.toLowerCase().includes(termo) || (p.categoria && p.categoria.toLowerCase().includes(termo)));
+            renderizarProdutos(filtrados);
+        }
+
+        function adicionarAoCarrinhoReal(nome, preco) {
+            let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+            const existe = carrinho.find(item => item.nome === nome);
+            if(existe) {
+                existe.qtd += 1;
+            } else {
+                carrinho.push({ nome: nome, preco: preco, qtd: 1 });
+            }
+            localStorage.setItem('carrinho', JSON.stringify(carrinho));
+            atualizarBadge();
+            alert(`${nome} adicionado ao carrinho!`);
+        }
+
+        function atualizarBadge() {
+            let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+            const totalQtd = carrinho.reduce((acc, item) => acc + item.qtd, 0);
+            document.getElementById('badge-nav').innerText = totalQtd;
+        }
+
+        obterProdutos();
+        atualizarBadge();
+    </script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompraJá - Painel do Fornecedor Real</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://yngxpudkzjkicyokcdwq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3hwdWRrempraWN5b2tjZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjU1NTQsImV4cCI6MjA5NDY0MTU1NH0.2UlNBw8F8HMgWeuyg9IygVFLAfYtW4Pf8j1jGH864gE";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
+    <style>
+        :root { --primary-orange: #FF6600; --bg-gray: #F8F9FA; --text-dark: #333333; --text-muted: #888888; --border-color: #EAEAEA; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: #E5E5E5; display: flex; justify-content: center; padding: 20px; }
+        .smartphone-screen { width: 375px; background: white; border-radius: 16px; overflow: hidden; height: 812px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; }
+        header { padding: 15px; background: #333; color: white; text-align: center; }
+        header h2 { font-size: 15px; font-weight: bold; }
+        .panel-content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
+        .panel-content::-webkit-scrollbar { display: none; }
+        .form-section, .list-section { background: white; border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .form-section h3, .list-section h3 { font-size: 13px; margin-bottom: 15px; color: black; border-bottom: 1px solid #EEE; padding-bottom: 8px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 11px; color: var(--text-dark); margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 12px; background: var(--bg-gray); outline: none; }
+        
+        /* Caixa de Divisão de Lucro Real */
+        .comissao-box { background: #FFF7F2; border: 1px dashed var(--primary-orange); padding: 10px; border-radius: 8px; margin-top: 5px; font-size: 11px; color: #333; display: none; line-height: 1.5; }
+        
+        .file-label { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--bg-gray); border: 2px dashed var(--border-color); padding: 15px; border-radius: 8px; cursor: pointer; font-size: 12px; color: #555; font-weight: bold; }
+        .file-label:hover { border-color: var(--primary-orange); color: var(--primary-orange); }
+        .submit-btn { width: 100%; background: var(--primary-orange); color: white; border: none; border-radius: 8px; height: 42px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .prod-manage-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+        .prod-manage-info { font-size: 12px; color: var(--text-dark); }
+        .delete-prod-btn { background: none; border: none; color: #DC3545; cursor: pointer; padding: 8px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="smartphone-screen">
+        <header><h2><i class="fa-solid fa-store" style="color: var(--primary-orange);"></i> Painel do Fornecedor</h2></header>
+
+        <div class="panel-content">
+            <div class="form-section">
+                <h3>Carregar Produto no Catálogo Real</h3>
+                <form id="form-forn-produto" onsubmit="enviarProdutoFornecedor(event)">
+                    <div class="form-group">
+                        <label>Nome do Artigo</label>
+                        <input type="text" id="forn-nome" placeholder="Ex: Casaco de Ganga Slim" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>O Teu Preço de Fornecedor (Kz)</label>
+                        <input type="number" id="forn-preco" placeholder="Quanto queres receber pelo produto?" required oninput="calcularPrecoFinalReal()">
+                        
+                        <div class="comissao-box" id="caixa-calculo-comissao">
+                            <div>🤝 <b>O teu ganho líquido:</b> <span id="ganho-forn">0</span> Kz</div>
+                            <div>📈 <b>Margem CompraJá:</b> +2.000 Kz (Taxa Fixa da Plataforma)</div>
+                            <div style="border-top: 1px dotted #FF6600; margin-top: 4px; padding-top: 4px; font-weight: bold; color: var(--primary-orange);">
+                                🛒 Preço Final ao Consumidor na App: <span id="preco-consumidor">0</span> Kz
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Categoria Oficial</label>
+                        <select id="forn-categoria" required>
+                            <option value="">Escolha uma categoria...</option>
+                            <option value="Supermercado">Supermercado (Mercado)</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Higiene">Higiene e Estética</option>
+                            <option value="Tecnologia">Tecnologia</option>
+                            <option value="Moda">Moda / Roupas</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Descrição do Produto (Opcional)</label>
+                        <input type="text" id="forn-descricao" placeholder="Ex: Tamanho M, 100% algodão...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fotografia do Produto</label>
+                        <label for="forn-foto-file" class="file-label" id="file-label-text">
+                            <i class="fa-solid fa-camera" style="font-size: 16px;"></i> Escolher da Galeria ou Câmara
+                        </label>
+                        <input type="file" id="forn-foto-file" accept="image/*" style="display: none;" onchange="atualizarTextoFicheiro()">
+                    </div>
+
+                    <button type="submit" id="btn-publicar" class="submit-btn">Publicar Imediatamente</button>
+                </form>
+            </div>
+
+            <div class="list-section">
+                <h3>Gerir Meus Produtos</h3>
+                <div id="lista-gestao-produtos"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função Real Matemática que faz o cálculo ao digitar
+        function calcularPrecoFinalReal() {
+            const precoInput = document.getElementById('forn-preco').value;
+            const caixa = document.getElementById('caixa-calculo-comissao');
+            const txtGanhos = document.getElementById('ganho-forn');
+            const txtConsumidor = document.getElementById('preco-consumidor');
+
+            if (precoInput && parseFloat(precoInput) > 0) {
+                const valorFornecedor = parseFloat(precoInput);
+                const valorFinalApp = valorFornecedor + 2000; // Soma real dos 2.000 Kz
+
+                txtGanhos.innerText = valorFornecedor.toLocaleString();
+                txtConsumidor.innerText = valorFinalApp.toLocaleString();
+                caixa.style.display = "block"; // Torna visível na hora
+            } else {
+                caixa.style.display = "none";
+            }
+        }
+
+        function atualizarTextoFicheiro() {
+            const fileInput = document.getElementById('forn-foto-file');
+            const labelText = document.getElementById('file-label-text');
+            if (fileInput.files.length > 0) {
+                labelText.innerHTML = `<i class="fa-solid fa-check" style="color: green;"></i> Imagem Selecionada`;
+                labelText.style.borderColor = "green";
+            }
+        }
+
+        async function enviarProdutoFornecedor(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btn-publicar');
+            
+            const precoForn = parseFloat(document.getElementById('forn-preco').value);
+            const nome = document.getElementById('forn-nome').value;
+            const categoria = document.getElementById('forn-categoria').value;
+            const descricao = document.getElementById('forn-descricao').value || "";
+            const fileInput = document.getElementById('forn-foto-file');
+
+            // REGRA COMERCIAL DE PREÇO: O preço salvo na tabela de produtos da app 
+            // já deve ir com os 2.000 Kz somados automaticamente para o comprador ver o valor final!
+            const precoFinalConsumidor = precoForn + 2000;
+
+            if (fileInput.files.length === 0) {
+                alert("Por favor, seleciona ou tira uma fotografia real do produto.");
+                return;
+            }
+
+            btn.innerText = "A carregar imagem real...";
+            btn.disabled = true;
+
+            try {
+                const f = fileInput.files[0];
+                const extensao = f.name.split('.').pop();
+                const nomeUnicoFicheiro = `${Date.now()}-${Math.random().toString(36).substring(7)}.${extensao}`;
+
+                const { data: uploadData, error: uploadError } = await _supabase.storage
+                    .from('fotos-produtos')
+                    .upload(nomeUnicoFicheiro, f);
+
+                if (uploadError) throw uploadError;
+
+                const { data: urlData } = _supabase.storage
+                    .from('fotos-produtos')
+                    .getPublicUrl(nomeUnicoFicheiro);
+
+                const imagem_url = urlData.publicUrl;
+
+                // Envia o preço já acrescido com a taxa da plataforma
+                const { error: dbError } = await _supabase
+                    .from('produtos')
+                    .insert([{ nome, preco: precoFinalConsumidor, categoria, descricao, imagem_url }]);
+
+                if (dbError) throw dbError;
+
+                alert("Artigo publicado com sucesso com foto real!");
+                document.getElementById('form-forn-produto').reset();
+                document.getElementById('file-label-text').innerHTML = `<i class="fa-solid fa-camera"></i> Escolher da Galeria ou Câmara`;
+                document.getElementById('file-label-text').style.borderColor = "var(--border-color)";
+                document.getElementById('caixa-calculo-comissao').style.display = "none";
+                obterProdutosParaGestao();
+
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao processar o artigo. Verifica a tua ligação.");
+            } finally {
+                btn.innerText = "Publicar Imediatamente";
+                btn.disabled = false;
+            }
+        }
+
+        async function obtenerProdutosParaGestao() {
+            const container = document.getElementById('lista-gestao-produtos');
+            try {
+                const { data: produtos, error } = await _supabase.from('produtos').select('*').order('criado_em', { ascending: false });
+                if (error) throw error;
+                container.innerHTML = '';
+                if (!produtos || sizeof === 0) {
+                    container.innerHTML = '<p style="text-align: center; font-size: 11px; color: #888;">Nenhum produto ativo.</p>';
+                    return;
+                }
+                produtos.forEach(p => {
+                    container.innerHTML += `
+                        <div class="prod-manage-item">
+                            <div class="prod-manage-info">
+                                <b>${p.nome}</b><br><small>${p.categoria} | Preço Público: ${parseFloat(p.preco).toLocaleString()} Kz</small>
+                            </div>
+                            <button class="delete-prod-btn" onclick="eliminarProdutoReal('${p.id}', '${p.nome}')"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        async function eliminarProdutoReal(id, nome) {
+            if (!confirm(`Remover "${nome}"?`)) return;
+            try {
+                await _supabase.from('produtos').delete().eq('id', id);
+                obterProdutosParaGestao();
+            } catch (err) { console.error(err); }
+        }
+
+        obterProdutosParaGestao();
+    </script>
+</body>
+</html>

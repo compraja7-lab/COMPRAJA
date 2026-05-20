@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompraJá - Categorias</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://yngxpudkzjkicyokcdwq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3hwdWRrempraWN5b2tjZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjU1NTQsImV4cCI6MjA5NDY0MTU1NH0.2UlNBw8F8HMgWeuyg9IygVFLAfYtW4Pf8j1jGH864gE";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+    <style>
+        :root {
+            --primary-orange: #FF6600;
+            --bg-gray: #F8F9FA;
+            --bg-sidebar: #F1F3F5;
+            --text-dark: #333333;
+            --border-color: #EAEAEA;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: #E5E5E5; display: flex; justify-content: center; padding: 20px; }
+
+        .smartphone-screen { width: 375px; background-color: white; border-radius: 16px; overflow: hidden; height: 812px; position: relative; display: flex; flex-direction: column; }
+        header { padding: 15px; background: white; border-bottom: 1px solid var(--border-color); }
+        header h2 { font-size: 16px; font-weight: 700; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; margin-bottom: 60px; }
+        
+        .sidebar { width: 95px; background-color: var(--bg-sidebar); overflow-y: auto; display: flex; flex-direction: column; }
+        .sidebar-item { padding: 15px 5px; text-align: center; font-size: 10px; color: var(--text-dark); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .sidebar-item.active { background-color: white; color: var(--primary-orange); border-left: 4px solid var(--primary-orange); font-weight: bold; }
+        .sidebar-item i { font-size: 16px; }
+
+        .content-right { flex: 1; padding: 15px; overflow-y: auto; }
+        .cat-banner-title { font-size: 14px; font-weight: bold; color: black; margin-bottom: 15px; text-transform: uppercase; border-bottom: 2px solid var(--primary-orange); padding-bottom: 4px; }
+        
+        .products-sub-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .mini-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; }
+        .mini-img { width: 100%; height: 75px; background: var(--bg-gray); object-fit: cover; border-radius: 6px; }
+        .mini-name { font-size: 11px; color: var(--text-dark); margin: 4px 0; height: 28px; overflow: hidden; }
+        .mini-price { font-size: 11px; font-weight: bold; color: black; }
+        .mini-btn { background: var(--primary-orange); color: white; border: none; width: 100%; padding: 4px 0; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; margin-top: 4px; }
+
+        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid var(--border-color); display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 0; text-align: center; }
+        .nav-item { display: flex; flex-direction: column; font-size: 10px; color: #888; text-decoration: none; }
+        .nav-item.active { color: var(--primary-orange); }
+        .nav-item i { font-size: 18px; margin-bottom: 3px; }
+    </style>
+</head>
+<body>
+
+    <div class="smartphone-screen">
+        <header><h2>Categorias</h2></header>
+
+        <div class="main-container">
+            <div class="sidebar">
+                <div class="sidebar-item active" id="tab-Supermercado" onclick="selecionarCategoria('Supermercado')"><i class="fa-solid fa-basket-shopping"></i>Mercado</div>
+                <div class="sidebar-item" id="tab-Bebidas" onclick="selecionarCategoria('Bebidas')"><i class="fa-solid fa-wine-bottle"></i>Bebidas</div>
+                <div class="sidebar-item" id="tab-Higiene" onclick="selecionarCategoria('Higiene')"><i class="fa-solid fa-pump-soap"></i>Higiene</div>
+                <div class="sidebar-item" id="tab-Tecnologia" onclick="selecionarCategoria('Tecnologia')"><i class="fa-solid fa-headphones"></i>Tecnologia</div>
+                <div class="sidebar-item" id="tab-Moda" onclick="selecionarCategoria('Moda')"><i class="fa-solid fa-shirt"></i>Roupas</div>
+            </div>
+
+            <div class="content-right">
+                <div class="cat-banner-title" id="categoria-atual-txt">Supermercado</div>
+                <div class="products-sub-grid" id="produtos-categoria-container">
+                    </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i>Início</a>
+            <a href="categorias.html" class="nav-item active"><i class="fa-solid fa-bars"></i>Categorias</a>
+            <a href="carrinho.html" class="nav-item"><i class="fa-solid fa-cart-shopping"></i>Carrinho</a>
+            <a href="registo.html" class="nav-item"><i class="fa-regular fa-user"></i>Conta</a>
+        </div>
+    </div>
+
+    <script>
+        let categoriaAtiva = "Supermercado";
+
+        async function selecionarCategoria(nomeCat) {
+            categoriaAtiva = nomeCat;
+            
+            // Alterar classes ativas na barra lateral
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${nomeCat}`).classList.add('active');
+            document.getElementById('categoria-atual-txt').innerText = nomeCat === 'Moda' ? 'Roupas / Moda' : nomeCat;
+
+            const container = document.getElementById('produtos-categoria-container');
+            container.innerHTML = '<p style="font-size:11px; color:#888; text-align:center; grid-column:span 2;">A carregar...</p>';
+
+            try {
+                const { data, error } = await _supabase
+                    .from('produtos')
+                    .select('*')
+                    .eq('categoria', nomeCat);
+
+                if (error) throw error;
+
+                if(!data || data.length === 0) {
+                    container.innerHTML = '<p style="font-size:11px; color:#888; text-align:center; grid-column:span 2;">Sem produtos nesta categoria.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                data.forEach(p => {
+                    container.innerHTML += `
+                        <div class="mini-card">
+                            <img class="mini-img" src="${p.imagem_url || 'https://via.placeholder.com/150'}">
+                            <div class="mini-name">${p.nome}</div>
+                            <div class="mini-price">${parseFloat(p.preco).toLocaleString()} Kz</div>
+                            <button class="mini-btn" onclick="adicionarAoCarrinhoCat('${p.nome}', ${p.preco})">Adicionar</button>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                container.innerHTML = '<p style="font-size:11px; color:red;">Erro de carregamento.</p>';
+            }
+        }
+
+        function adicionarAoCarrinhoCat(nome, preco) {
+            let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+            const existe = carrinho.find(item => item.nome === nome);
+            if(existe) { existe.qtd += 1; } else { carrinho.push({ nome: nome, preco: preco, qtd: 1 }); }
+            localStorage.setItem('carrinho', JSON.stringify(carrinho));
+            alert(`${nome} adicionado ao carrinho!`);
+        }
+
+        // Ler parâmetros da URL caso o utilizador clique num círculo da página inicial
+        const urlParams = new URLSearchParams(window.location.search);
+        const catUrl = urlParams.get('cat');
+        if(catUrl) {
+            selecionarCategoria(catUrl);
+        } else {
+            selecionarCategoria('Supermercado');
+        }
+    </script>
+</body>
+</html>

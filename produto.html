@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompraJá - Detalhes do Produto</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = "https://yngxpudkzjkicyokcdwq.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluZ3hwdWRrempraWN5b2tjZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjU1NTQsImV4cCI6MjA5NDY0MTU1NH0.2UlNBw8F8HMgWeuyg9IygVFLAfYtW4Pf8j1jGH864gE";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
+    <style>
+        :root {
+            --primary-orange: #FF6600;
+            --primary-orange-light: #FFF3EB;
+            --bg-gray: #F8F9FA;
+            --text-dark: #333333;
+            --text-muted: #888888;
+            --border-color: #EAEAEA;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: #E5E5E5; display: flex; justify-content: center; padding: 20px; }
+
+        .smartphone-screen {
+            width: 375px; background: white; border-radius: 16px; overflow-y: auto; height: 812px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column;
+        }
+        .smartphone-screen::-webkit-scrollbar { display: none; }
+
+        /* Barra de Topo com botão de voltar */
+        .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); background: white; position: sticky; top: 0; z-index: 10; }
+        .top-bar a { color: black; text-decoration: none; font-size: 18px; }
+        .top-bar h2 { font-size: 15px; font-weight: bold; }
+
+        /* Area da Imagem Principal */
+        .product-hero-bg { width: 100%; height: 260px; background: var(--bg-gray); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .product-large-img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Detalhes de Informação */
+        .details-container { padding: 20px 15px; flex: 1; }
+        .det-category { font-size: 11px; color: var(--primary-orange); font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .det-name { font-size: 20px; font-weight: bold; color: black; line-height: 1.2; margin-bottom: 10px; }
+        .det-price { font-size: 22px; font-weight: 800; color: black; margin-bottom: 20px; }
+        
+        /* Secção de Descrição Opcional */
+        .description-box { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px; }
+        .description-box h3 { font-size: 13px; margin-bottom: 6px; color: #333; }
+        .description-box p { font-size: 12px; color: #666; line-height: 1.5; }
+
+        /* Seletor de Quantidade Real */
+        .qty-selector { display: flex; align-items: center; gap: 15px; margin-top: 25px; }
+        .qty-label { font-size: 13px; font-weight: bold; color: var(--text-dark); }
+        .qty-controls { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: var(--bg-gray); }
+        .qty-btn { background: none; border: none; width: 35px; height: 35px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .qty-btn:hover { background: #DDD; }
+        .qty-value { width: 30px; text-align: center; font-size: 13px; font-weight: bold; }
+
+        /* Botão inferior de fixação */
+        .buy-action-bar { padding: 15px; background: white; border-top: 1px solid var(--border-color); position: sticky; bottom: 0; width: 100%; }
+        .add-cart-master-btn { width: 100%; background: var(--primary-orange); color: white; border: none; border-radius: 10px; height: 48px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="smartphone-screen">
+        <div class="top-bar">
+            <a href="javascript:history.back()"><i class="fa-solid fa-arrow-left"></i></a>
+            <h2>Detalhes do Artigo</h2>
+            <a href="carrinho.html"><i class="fa-solid fa-cart-shopping" style="font-size: 16px; color: var(--primary-orange);"></i></a>
+        </div>
+
+        <div id="loader" style="text-align: center; padding: 40px; font-size: 13px; color: #888;">
+            <i class="fa-solid fa-spinner fa-spin"></i> A obter informações reais...
+        </div>
+
+        <div id="produto-wrapper" style="display: none;">
+            <div class="product-hero-bg">
+                <img id="p-foto" class="product-large-img" src="" alt="">
+            </div>
+
+            <div class="details-container">
+                <div id="p-categoria" class="det-category"></div>
+                <h1 id="p-nome" class="det-name"></h1>
+                <div id="p-preco" class="det-price"></div>
+
+                <div id="p-desc-box" class="description-box" style="display: none;">
+                    <h3>Informações do Fornecedor</h3>
+                    <p id="p-descricao"></p>
+                </div>
+
+                <div class="qty-selector">
+                    <span class="qty-label">Quantidade:</span>
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="alterarQtd(-1)">-</button>
+                        <div class="qty-value" id="qty-val">1</div>
+                        <button class="qty-btn" onclick="alterarQtd(1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="buy-action-bar">
+                <button class="add-cart-master-btn" onclick="adicionarAoCarrinhoMaster()">
+                    <i class="fa-solid fa-bag-shopping"></i> Adicionar ao Carrinho
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let produtoAtual = null;
+        let quantidadeSelecionada = 1;
+
+        function alterarQtd(valor) {
+            quantidadeSelecionada += valor;
+            if (quantidadeSelecionada < 1) quantidadeSelecionada = 1;
+            document.getElementById('qty-val').innerText = quantidadeSelecionada;
+        }
+
+        async function carregarProdutoDetalhado() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const produtoId = urlParams.get('id');
+
+            if (!produtoId) {
+                alert("Produto inválido.");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const { data: produto, error } = await _supabase
+                    .from('produtos')
+                    .select('*')
+                    .eq('id', produtoId)
+                    .single();
+
+                if (error || !produto) throw error;
+
+                produtoAtual = produto;
+
+                // Preencher a tela com dados REAIS do banco
+                document.getElementById('p-foto').src = produto.imagem_url || 'https://via.placeholder.com/300';
+                document.getElementById('p-categoria').innerText = produto.categoria || 'Geral';
+                document.getElementById('p-nome').innerText = produto.nome;
+                document.getElementById('p-preco').innerText = `${parseFloat(produto.preco).toLocaleString()} Kz`;
+
+                // Logica Opcional da Descrição solicitada
+                if (produto.descricao && produto.descricao.trim() !== "") {
+                    document.getElementById('p-descricao').innerText = produto.descricao;
+                    document.getElementById('p-desc-box').style.display = 'block';
+                }
+
+                // Alternar Loader -> Conteúdo
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('produto-wrapper').style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loader').innerText = "Erro ao localizar o artigo no Supabase.";
+            }
+        }
+
+        function adicionarAoCarrinhoMaster() {
+            if (!produtoAtual) return;
+
+            let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+            const existe = carrinho.find(item => item.nome === produtoAtual.nome);
+
+            if (existe) {
+                existe.qtd += quantidadeSelecionada;
+            } else {
+                carrinho.push({
+                    nome: produtoAtual.nome,
+                    preco: produtoAtual.preco,
+                    qtd: quantidadeSelecionada
+                });
+            }
+
+            localStorage.setItem('carrinho', JSON.stringify(carrinho));
+            alert(`${quantidadeSelecionada}x ${produtoAtual.nome} adicionado(s) ao carrinho!`);
+            window.location.href = 'carrinho.html';
+        }
+
+        carregarProdutoDetalhado();
+    </script>
+</body>
+</html>
